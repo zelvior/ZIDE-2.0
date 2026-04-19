@@ -1,5 +1,5 @@
 import React from 'react';
-import { Send, User, Bot, Sparkles, X, RotateCcw } from 'lucide-react';
+import { Send, User, Bot, Sparkles, X, RotateCcw, Check } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,9 +10,10 @@ import { motion, AnimatePresence } from 'motion/react';
 interface ChatPanelProps {
   currentFile: string | null;
   fileContent: string;
+  selection: string;
 }
 
-export const ChatPanel = ({ currentFile, fileContent }: ChatPanelProps) => {
+export const ChatPanel = ({ currentFile, fileContent, selection }: ChatPanelProps) => {
   const [input, setInput] = React.useState('');
   const { messages, isTyping, sendMessage, setMessages } = useAI();
   const scrollRef = React.useRef<HTMLDivElement>(null);
@@ -20,7 +21,13 @@ export const ChatPanel = ({ currentFile, fileContent }: ChatPanelProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
-    sendMessage(input, currentFile ? `File: ${currentFile}\nContent:\n${fileContent}` : undefined);
+    
+    let context = currentFile ? `File: ${currentFile}\nContent:\n${fileContent}` : undefined;
+    if (selection) {
+      context = `File: ${currentFile}\nSelected Code Snippet:\n${selection}\n\nFull File Context:\n${fileContent}`;
+    }
+    
+    sendMessage(input, context);
     setInput('');
   };
 
@@ -99,7 +106,16 @@ export const ChatPanel = ({ currentFile, fileContent }: ChatPanelProps) => {
       </ScrollArea>
 
       <div className="p-4 border-t border-[var(--border)] bg-[var(--sidebar-bg)]">
-        {currentFile && (
+        {selection && (
+          <div className="mb-2 px-2 py-1 bg-blue-500/20 rounded text-[10px] flex items-center justify-between border border-blue-500/30 text-blue-400">
+            <span className="truncate font-bold">Selected {selection.split('\n').length} lines</span>
+            <div className="flex items-center gap-1">
+               <span className="text-[9px] opacity-70">Context Active</span>
+               <Check size={8} />
+            </div>
+          </div>
+        )}
+        {currentFile && !selection && (
           <div className="mb-2 px-2 py-1 bg-[var(--active-bg)] rounded text-[10px] flex items-center justify-between border border-[var(--border)]">
             <span className="truncate opacity-70">Context: {currentFile}</span>
             <Sparkles size={10} className="text-yellow-500 ml-2" />

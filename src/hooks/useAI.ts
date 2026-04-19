@@ -69,11 +69,40 @@ export function useAI() {
     }
   }, []);
 
+  const getCommandSuggestions = useCallback(async (currentDir: string, lastCommand?: string) => {
+    try {
+      const prompt = `You are a terminal expert. Suggest 3 useful shell commands based on the current context.
+      Current Directory: ${currentDir}
+      Last Command: ${lastCommand || 'None'}
+      
+      Suggest commands that a developer might run next (e.g., git status, npm start, ls -la).
+      Respond only with a JSON array of strings. No markdown. Example: ["git status", "npm run dev", "ls -R"]`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview", // Flash is faster for suggestions
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+      });
+
+      try {
+        const text = response.text || '[]';
+        // Cleanup potential markdown
+        const cleaned = text.replace(/```json|```/g, '').trim();
+        return JSON.parse(cleaned) as string[];
+      } catch {
+        return [];
+      }
+    } catch (error) {
+      console.error('AI Suggestion Error:', error);
+      return [];
+    }
+  }, []);
+
   return {
     messages,
     isTyping,
     sendMessage,
     getCodeEdit,
+    getCommandSuggestions,
     setMessages
   };
 }

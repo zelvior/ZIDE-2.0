@@ -164,13 +164,27 @@ async function startServer() {
   // --- Git Utility ---
   app.post('/api/git', async (req, res) => {
     const { command } = req.body;
-    const git = spawn('git', command.split(' '), { cwd: ROOT_DIR });
-    let output = '';
-    git.stdout.on('data', (d) => output += d);
-    git.stderr.on('data', (d) => output += d);
-    git.on('close', (code) => {
-      res.json({ code, output });
-    });
+    try {
+      // Security: Only allow safe git commands
+      const allowedCommands = ['status', 'add', 'commit', 'push', 'pull', 'stash', 'branch', 'checkout', 'log', 'diff'];
+      const cmdParts = command.split(' ');
+      if (!allowedCommands.includes(cmdParts[0])) {
+        return res.status(403).json({ error: 'Command not allowed' });
+      }
+
+      const git = spawn('git', cmdParts, { cwd: ROOT_DIR });
+      let output = '';
+      let errorOutput = '';
+      
+      git.stdout.on('data', (d) => output += d);
+      git.stderr.on('data', (d) => errorOutput += d);
+      
+      git.on('close', (code) => {
+        res.json({ code, output, error: errorOutput });
+      });
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
   });
 
   // --- Vite / Frontend ---
