@@ -1,0 +1,6 @@
+{
+  "name": "Aether AI IDE",
+  "description": "A high-performance, Cursor-inspired AI-powered IDE with codebase indexing, real-time terminal, and intelligent coding assistance.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
